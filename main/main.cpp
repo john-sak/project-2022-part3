@@ -57,12 +57,12 @@ int main(int argc, char *argv[]) {
                         // create initial polygon
                         polyline S(arg.get_points(), arg.get_alg(), arg.get_edge_sel(), arg.get_init(), arg.get_out_file());
                         for (int l = 0; l < 2; l++){
-                            if ( l = 0) {
+                            if (l = 0) {
                                 // optimize polygon area, write results in given out_file
                                 optimization O(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, MIN_OR_MAX, THRESHOLD, arg.get_out_file(), S.get_area(), S.get_ch_area());
                             }
                             else
-                                for ( int m = 0; m < 3; m++) {
+                                for (int m = 0; m < 3; m++) {
                                     // optimize polygon area, write results in given out_file
                                     optimization O(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, MIN_OR_MAX, annealing[m], arg.get_out_file(), S.get_area(), S.get_ch_area());
                                 }
