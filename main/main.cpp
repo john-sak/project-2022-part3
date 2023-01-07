@@ -13,13 +13,13 @@
 
 int main(int argc, char *argv[]) {
 
-    if (argc < 5) throw std::invalid_argument();
-    if (strcmp(argv[1], "-i") || strcmp(argv[3], "-o")) throw std::invalid_argument();
-    std::string path = std::string(argv[2]), out = ats::string(argv[4]);
+    if (argc < 5) throw std::invalid_argument("Wrong arguments!");
+    if (strcmp(argv[1], "-i") || strcmp(argv[3], "-o")) throw std::invalid_argument("Wrong arguments!");
+    std::string path = std::string(argv[2]), out = std::string(argv[4]);
 
     if (argc > 5) {
-        if (argc != 7) throw std::invalid_argument();
-        if (strcmp(argv[5], "-preprocess")) throw std::invalid_argument();
+        if (argc != 7) throw std::invalid_argument("Wrong arguments!");
+        if (strcmp(argv[5], "-preprocess")) throw std::invalid_argument("Wrong arguments!");
         std::string preprocess = std::string(argv[6]);
     }
 
@@ -43,18 +43,19 @@ int main(int argc, char *argv[]) {
                         argv.push_back((char *) "-i");
                         argv.push_back((char *) dirEntry);
                         argv.push_back((char *) "-o");
-                        argv.push_back((char *) out);
+                        argv.push_back((char *) &out);
                         argv.push_back((char *) "-algorithm");
-                        argv.push_back((char *) poly_algos[i]);
+                        argv.push_back((char *) &poly_algos[i]);
                         argv.push_back((char *) "-edge_selection");
-                        argv.push_back((char *) edge_sel[j]);
-                        if (!strcmp((char *) poly_algos[i], "incremental")) {
+                        argv.push_back((char *) &edge_sel[j]);
+                        if (!strcmp((char *) &poly_algos[i], "incremental")) {
                             argv.push_back((char *) "-initialization");
-                            argv.push_back((char *) init[k]);
+                            argv.push_back((char *) &init[k]);
                         } else continue;
                         argv.push_back(nullptr);
                         arguments arg(argv.size() - 1, argv.data());
                         // create initial polygon
+                        // ERROR EDW --> eixa sto myalo mou to arguments class apo thn 1h ergasia opote h allazoume ton kwdika tou arguments h afth th grammh ligo
                         polyline S(arg.get_points(), arg.get_alg(), arg.get_edge_sel(), arg.get_init(), arg.get_out_file());
                         for (int l = 0; l < 2; l++){
                             if (l = 0) {
