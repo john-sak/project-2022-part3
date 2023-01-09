@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <dirent.h>
 
 #include <arguments.hpp>
 #include <polyline.hpp>
@@ -7,9 +8,9 @@
 
 #include <filesystem>
 
-#define L 10
+#define L "10"
 #define MIN_OR_MAX "max"
-#define THRESHOLD 100
+#define THRESHOLD "0.1"
 
 int main(int argc, char *argv[]) {
 
@@ -22,56 +23,72 @@ int main(int argc, char *argv[]) {
         if (strcmp(argv[5], "-preprocess")) throw std::invalid_argument("Wrong arguments!");
         std::string preprocess = std::string(argv[6]);
     }
-
-    // part 1
     const std::string poly_algos[2] = {"incremental", "convex_hull"};
     const std::string edge_sel[3] = {"1", "2", "3"};
     const std::string init[4] = {"1a", "1b", "2a", "2b"}; //incremental only
 
     // part 2
     const std::string opt_algos[2] = {"local_search", "simulated_annealing"};
-    const std::string annealing[3] = {"local", "global", "subdivision"}; //simulated annealing only
+    const std::string annealing[3] = {"local", "global", "subdivision"}; //simulated annealing only no subdiv
+
+
 
     try {
-        // here new class for reading the folder first orrr just reading the folder and loop files
-        for (auto const& dirEntry: std::filesystem::recursive_directory_iterator(path)) {
-            // loop through  all combinations of part 1 and part 2 algorithms
-            for (int i = 0; i < 2; i++) {
-                for (int j = 0; j < 3; j++) {
-                    for (int k = 0; k < 4; k++) {
-                        std::vector<char *> argv;
-                        argv.push_back((char *) "-i");
-                        argv.push_back((char *) dirEntry);
-                        argv.push_back((char *) "-o");
-                        argv.push_back((char *) &out);
-                        argv.push_back((char *) "-algorithm");
-                        argv.push_back((char *) &poly_algos[i]);
-                        argv.push_back((char *) "-edge_selection");
-                        argv.push_back((char *) &edge_sel[j]);
-                        if (!strcmp((char *) &poly_algos[i], "incremental")) {
-                            argv.push_back((char *) "-initialization");
-                            argv.push_back((char *) &init[k]);
-                        } else continue;
-                        argv.push_back(nullptr);
-                        arguments arg(argv.size() - 1, argv.data());
-                        // create initial polygon
-                        // ERROR EDW --> eixa sto myalo mou to arguments class apo thn 1h ergasia opote h allazoume ton kwdika tou arguments h afth th grammh ligo
-                        polyline S(arg.get_points(), arg.get_alg(), arg.get_edge_sel(), arg.get_init(), arg.get_out_file());
-                        for (int l = 0; l < 2; l++){
-                            if (l = 0) {
-                                // optimize polygon area, write results in given out_file
-                                optimization O(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, MIN_OR_MAX, THRESHOLD, arg.get_out_file(), S.get_area(), S.get_ch_area());
-                            }
-                            else
-                                for (int m = 0; m < 3; m++) {
+        // open dir
+        DIR *d;
+        struct dirent *dir;
+        d = opendir(path.c_str());
+        if (d)
+        {
+            // write initial lines to file
+            std::ofstream file(out);
+            file << "       ||                  local_search                 ||              simulated_annealing              ||" << std::endl;
+            file << "Size   || min score | max score | min bound | max bound || min score | max score | min bound | max bound ||" << std::endl;
+
+            while ((dir = readdir(d)) != NULL)
+            {
+                arguments arg(dir->d_name);
+                // wtire size of points of file
+                
+                // loop throught algorithms
+                for (int l = 0; l < 2; l++){
+                    double min_score = 1;
+                    double max_score = 0;
+                    for (int i = 0; i < 2; i++) {
+                        for (int j = 0; j < 3; j++) {
+                            for (int k = 0; k < 4; k++) {
+                                // create initial polygon
+                                polyline S(arg.get_points(),poly_algos[i], edge_sel[j], init[k], out);
+                
+                                if ( l = 0) {
                                     // optimize polygon area, write results in given out_file
-                                    optimization O(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, MIN_OR_MAX, annealing[m], arg.get_out_file(), S.get_area(), S.get_ch_area());
+                                    optimization O(S.get_pl_points(),S.get_poly_line(), opt_algos[l], L, "min", THRESHOLD, out, S.get_area(), S.get_ch_area());
+                                    optimization O2(S.get_pl_points(),S.get_poly_line(), opt_algos[l], L, "max", THRESHOLD, out, S.get_area(), S.get_ch_area());
+                                    // ti einai to bound
+                                    if (O.get_end_area() < min_score) min_score = O.get_end_area();
+                                    if (O2.get_end_area() > max_score) max_score = O2.get_end_area();
                                 }
+                                else
+                                    for ( int m = 0; m < 3; m++) {
+                                        // optimize polygon area, write results in given out_file
+                                        optimization O(S.get_pl_points(),S.get_poly_line(), opt_algos[l], L, "min", annealing[m], out, S.get_area(), S.get_ch_area());
+                                        optimization O2(S.get_pl_points(),S.get_poly_line(), opt_algos[l], L, "max", annealing[m], out, S.get_area(), S.get_ch_area());
+                        
+                                        if (O.get_end_area() < min_score) min_score = O.get_end_area();
+                                        if (O2.get_end_area() > max_score) max_score = O2.get_end_area();
+                                    }
+                            }
                         }
                     }
+                    // here write results of each algo to file
+                    file << "" 
                 }
+    // here write new line to file
+
             }
+            closedir(d);
         }
+            
     } catch (std::invalid_argument const &ex) {
         std::cerr << ex.what() << std::endl;
         std::cerr << "Usage: ./optimal_polygon -i <input_file> -o <output_file> -algorithm <\'local_search\' OR \'simulated_annealing\'> -L  < L parameter >  -max [maximal area polygonization]  -min [minimal area polygonization]  -threshold < double > | with \'local_search\' algorithm only> -annealing < \'local\' OR \'global\' OR \'subdivision\' > | with \'simulated_annealing\' algorithm only" << std::endl;

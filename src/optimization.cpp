@@ -597,6 +597,9 @@ void optimization::write_to_file(std::string alg, int time) const {
     }
     return;
 }
+double optimization::get_end_area(void) const {
+    return this->end_area;
+}
 
 
 

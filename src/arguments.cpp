@@ -28,24 +28,9 @@ void arguments::make_vector(void) {
     return;
 }
 
-arguments::arguments(int argc, char *argv[]) {
-    if (argc != 12) throw std::invalid_argument("Wrong arguments");
-    if (strcmp(argv[1], "-i") || strcmp(argv[3], "-o") || strcmp(argv[5], "-algorithm") || strcmp(argv[7], "-L") || ( strcmp(argv[9], "-max") && strcmp(argv[9], "-min")) || (strcmp(argv[10], "-threshold") && strcmp(argv[10], "-annealing")) ) throw std::invalid_argument("Wrong arguments");
-    if (strcmp(argv[6], "local_search") && strcmp(argv[6], "simulated_annealing")) throw std::invalid_argument("\'Algorithm\' must be \'local_search\' or \'simulated_annealing\'");
-    if (!strcmp(argv[6], "local_search")) {
-        if (strcmp(argv[10], "-threshold")) throw std::invalid_argument("Wrong arguments");
-        this->alg_param = std::string(argv[11]);
-    } else if (!strcmp(argv[6], "simulated_annealing")) {
-        if (strcmp(argv[10], "-annealing")) throw std::invalid_argument("Wrong arguments");
-        if (strcmp(argv[11], "local") && strcmp(argv[11], "global") && strcmp(argv[11], "subdivision")) throw std::invalid_argument("\'Annealing\' must be \'local\', \'global\'or \'subdivision\'");
-        this->alg_param = std::string(argv[11]);    
-    }
+arguments::arguments(char *file) {
     
-    this->in_file = std::string(argv[2]);
-    this->out_file = std::string(argv[4]);
-    this->alg = std::string(argv[6]);
-    this->L = std::string(argv[8]);
-    this->opt = std::string(argv[9]);
+    this->in_file = std::string(file);
     try {
         make_vector();
     } catch (...) {
@@ -58,35 +43,7 @@ std::string arguments::get_in_file(void) const {
     return this->in_file;
 }
 
-std::string arguments::get_out_file(void) const {
-    return this->out_file;
-}
-
-std::string arguments::get_alg(void) const {
-    return this->alg;
-}
-
-std::string arguments::get_L(void) const {
-    return this->L;
-}
-
-// std::string arguments::get_threshold(void) const {
-//     return this->threshold;
-// }
-
-// std::string arguments::get_annealing(void) const {
-//     return this->annealing;
-// }
-
 
 std::vector<std::pair<float, float>> arguments::get_points(void) const {
     return this->points;
-}
-
-std::string arguments::get_opt(void) const {
-    return this->opt;
-}
-
-std::string arguments::get_alg_param(void) const {
-    return this->alg_param;
 }

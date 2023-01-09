@@ -35,6 +35,7 @@ class optimization {
         void write_to_file(std::string, int) const;
     public:
         optimization(std::vector<Point>, std::vector<Segment>, std::string, std::string, std::string, std::string, std::string, double, double);
+        double get_end_area(void) const;
 
 };
 
