@@ -44,7 +44,7 @@ void polyline::incremental(int init) {
         auto stop = std::chrono::high_resolution_clock::now();
 
         // write to output file
-        this->write_to_file("Incremental", std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count());
+        // this->write_to_file("Incremental", std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count());
     } catch (...) {
         throw;
     }
@@ -136,7 +136,7 @@ void polyline::convex_hull(void) {
         auto stop = std::chrono::high_resolution_clock::now();
 
         // write to output file
-        this->write_to_file("Convex_Hull", std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count());
+        // this->write_to_file("Convex_Hull", std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count());
     } catch (...) {
         throw;
     }
@@ -195,9 +195,10 @@ int polyline::init_triangle(void) {
         //if three initial points are not collinear triangle can be created
         if (!CGAL::collinear(this->points[0], this->points[1], this->points[2])) {
             this->poly_line.push_back(Segment(this->points[2], this->points[0]));
+
             return 3;
         }
-
+        
         //if initial points are collinear
         int i = 3;
         int flag = 1;
@@ -530,24 +531,24 @@ Segment polyline::max_area(std::vector<Segment> vis_edges, int i) const {
     }
 }
 
-void polyline::write_to_file(std::string alg, int time) const {
-    try {
-        std::ofstream file(this->out_file);
-        file << "Polygonization" << std::endl;
-        for (Point p : this->pl_points) file << p.x() << " " << p.y() << std::endl;
-        for (Segment s : this->poly_line) file << s.source() << " " << s.target() << std::endl;
-        file << "Algorithm: " << alg << "_" << this->edge_sel << std::endl;
-        file << "Area: " << this->pl_area << std::endl;
-        file << "Ratio: " << (this->pl_area / this->ch_area) << std::endl;
-        file << "Construction time: " << time << " msec" << std::endl;
-        file.close();
-    } catch (...) {
-        throw;
-    }
-    return;
-}
+// void polyline::write_to_file(std::string alg, int time) const {
+//     try {
+//         std::ofstream file(this->out_file);
+//         file << "Polygonization" << std::endl;
+//         for (Point p : this->pl_points) file << p.x() << " " << p.y() << std::endl;
+//         for (Segment s : this->poly_line) file << s.source() << " " << s.target() << std::endl;
+//         file << "Algorithm: " << alg << "_" << this->edge_sel << std::endl;
+//         file << "Area: " << this->pl_area << std::endl;
+//         file << "Ratio: " << (this->pl_area / this->ch_area) << std::endl;
+//         file << "Construction time: " << time << " msec" << std::endl;
+//         file.close();
+//     } catch (...) {
+//         throw;
+//     }
+//     return;
+// }
 
-polyline::polyline(std::vector<std::pair<float, float>> vec, std::string alg, std::string edge_sel, std::string init, std::string out_file): out_file(out_file), init(init) {
+polyline::polyline(std::vector<std::pair<float, float>> vec, std::string alg, std::string edge_sel, std::string init): init(init) {
     try {
         //initialize points
         for(auto it = vec.begin(); it != vec.end(); ++it) this->points.push_back(Point(it->first, it->second));

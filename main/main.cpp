@@ -51,10 +51,11 @@ int main(int argc, char *argv[]) {
         file << "Size  || min score | max score | min bound | max bound || min score | max score | min bound | max bound ||" << std::endl;
 
         while ((dir = readdir(d)) != NULL) {
-            arguments arg(const_cast<char *> ((path + "/" + std::string(dir->d_name)).c_str()));
+            if (!std::string(dir->d_name).compare("..")) continue;
 
+            arguments arg(const_cast<char *> ((path + "/" + std::string(dir->d_name)).c_str()));
             // write size of points of file
-            int size;
+            int size = arg.get_points().size();
             file << std::left << std::setw(6) << size << "|";
 
             // loop through algorithms
@@ -80,12 +81,11 @@ int main(int argc, char *argv[]) {
 
                                 //create initial polygon
                                 polyline S(arg.get_points(), poly_algos[i], edge_sel[j], init[k]);
-
                                 // if local_search
                                 if (l == 0) {
-                                    optimization O_min(S.get_points(), S.get_poly_line(), opt_algos[l], L, "min", THRESHOLD, S.get_area(), S.get_ch_area());
-                                    optimization O_max(S.get_points(), S.get_poly_line(), opt_algos[l], L, "max", THRESHOLD, S.get_area(), S.get_ch_area());
-
+                                    optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", THRESHOLD, S.get_area(), S.get_ch_area());
+                                    optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", THRESHOLD, S.get_area(), S.get_ch_area());
+                                    
                                     min_score += O_min.get_end_area();
                                     if (O_min.get_end_area() > bound_min) bound_min = O_min.get_end_area();
 
@@ -95,14 +95,14 @@ int main(int argc, char *argv[]) {
                                 // if simulated_annealing
                                 } else {
                                     for (int m = 0; m < 3; m++) {
-                                        optimization O_min(S.get_points(), S.get_poly_line(), opt_algos[l], L, "min", annealing[m], S.get_area(), S.get_ch_area());
-                                        optimization O_max(S.get_points(), S.get_poly_line(), opt_algos[l], L, "max", annealing[m], S.get_area(), S.get_ch_area());
+                                        optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", annealing[m], S.get_area(), S.get_ch_area());
+                                        optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", annealing[m], S.get_area(), S.get_ch_area());
 
                                         min_score += O_min.get_end_area();
-                                        if (O.get_end_area() > bound_min) bound_min = O.get_end_area();
+                                        if (O_min.get_end_area() > bound_min) bound_min = O_min.get_end_area();
 
-                                        max_score += O_min.get_end_area();
-                                        if (O.get_end_area() > bound_max) bound_max = O.get_end_area();
+                                        max_score += O_max.get_end_area();
+                                        if (O_max.get_end_area() < bound_max) bound_max = O_max.get_end_area();
                                     }
                                 }
                             }
@@ -111,12 +111,12 @@ int main(int argc, char *argv[]) {
                         } else {
 
                             //create initial polygon
-                            polyline S(arg.get_points(), poly_algos[i], edge_sel[j]);
+                            polyline S(arg.get_points(), poly_algos[i], edge_sel[j], "");
 
                             // if local_search
                             if (l == 0) {
-                                optimization O_min(S.get_points(), S.get_poly_line(), opt_algos[l], L, "min", THRESHOLD, S.get_area(), S.get_ch_area());
-                                optimization O_max(S.get_points(), S.get_poly_line(), opt_algos[l], L, "max", THRESHOLD, S.get_area(), S.get_ch_area());
+                                optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", THRESHOLD, S.get_area(), S.get_ch_area());
+                                optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", THRESHOLD, S.get_area(), S.get_ch_area());
 
                                 min_score += O_min.get_end_area();
                                 if (O_min.get_end_area() > bound_min) bound_min = O_min.get_end_area();
@@ -127,14 +127,14 @@ int main(int argc, char *argv[]) {
                             // if simulated_annealing
                             } else {
                                 for (int m = 0; m < 3; m++) {
-                                    optimization O_min(S.get_points(), S.get_poly_line(), opt_algos[l], L, "min", annealing[m], S.get_area(), S.get_ch_area());
-                                    optimization O_max(S.get_points(), S.get_poly_line(), opt_algos[l], L, "max", annealing[m], S.get_area(), S.get_ch_area());
+                                    optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", annealing[m], S.get_area(), S.get_ch_area());
+                                    optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", annealing[m], S.get_area(), S.get_ch_area());
 
                                     min_score += O_min.get_end_area();
-                                    if (O.get_end_area() > bound_min) bound_min = O.get_end_area();
+                                    if (O_min.get_end_area() > bound_min) bound_min = O_min.get_end_area();
 
-                                    max_score += O_min.get_end_area();
-                                    if (O.get_end_area() > bound_max) bound_max = O.get_end_area();
+                                    max_score += O_max.get_end_area();
+                                    if (O_max.get_end_area() < bound_max) bound_max = O_max.get_end_area();
                                 }
                             }
                         }
