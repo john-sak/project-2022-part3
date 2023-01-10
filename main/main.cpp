@@ -47,14 +47,15 @@ int main(int argc, char *argv[]) {
         // write initial lines to file
         std::ofstream file(out);
         file << "      ||                  local_search                 ||              simulated_annealing              ||" << std::endl;
+        file << "======||===============================================||===============================================||" << std::endl;
         file << "Size  || min score | max score | min bound | max bound || min score | max score | min bound | max bound ||" << std::endl;
 
         while ((dir = readdir(d)) != NULL) {
-            arguments arg(path + "/" + dir->d_name);
+            arguments arg(const_cast<char *> ((path + "/" + std::string(dir->d_name)).c_str()));
 
             // write size of points of file
             int size;
-            file << std::setw(6) << size << "|";
+            file << std::left << std::setw(6) << size << "|";
 
             // loop through algorithms
 
@@ -141,7 +142,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 // write results of current algorithm to output file
-                file << "|" << std::setw(11) << min_score << "|" << std::setw(11) << max_score << "|" << std::setw(11) << bound_min << "|" << std::setw(11) << bound_max << "|";
+                file << std::left << "|" << std::setw(11) << min_score << "|" << std::setw(11) << max_score << "|" << std::setw(11) << bound_min << "|" << std::setw(11) << bound_max << "|";
             }
 
             // write new line to file
