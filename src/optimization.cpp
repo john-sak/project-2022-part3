@@ -160,7 +160,7 @@ void optimization::local_search(void) {
     for (auto it = this->pl_points.begin(); it != this->pl_points.end(); ++it) end_poly.push_back(*it);
     this->end_area = std::abs(end_poly.area());
 
-    this->write_to_file("local_search", std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count());
+    // this->write_to_file("local_search", std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count());
     
 }
 
@@ -307,7 +307,7 @@ void optimization::simulated_annealing_local(void) {
     // get optimized area
     this->end_area = std::abs(end_poly.area());
 
-    this->write_to_file("simulated_annealing", std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count());
+    // this->write_to_file("simulated_annealing", std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count());
 }
 
 std::vector<Point> optimization::simulated_annealing_global(std::vector<Point> points) {
@@ -449,7 +449,7 @@ void optimization::simulated_annealing_subdivision(void) {
 
         for ( auto it = sub_points[i].begin(); it != sub_points[i].end(); ++it) floats.push_back(std::make_pair((float) it->x(),  (float) it->y()));
 
-        polyline S(floats, "incremental", "1", "1a", "");
+        polyline S(floats, "incremental", "1", "1a");
 
         polygons[i].resize(sub_points[i].size());
 
@@ -579,32 +579,33 @@ std::vector<Point> optimization::get_ch(std::vector<Point> points) {
     }
 }
 
-void optimization::write_to_file(std::string alg, int time) const {
-    try {
-        std::ofstream file(this->out_file);
-        file << "Optimal Area Polygonization" << std::endl;
-        for (Point p : this->pl_points) file << p.x() << " " << p.y() << std::endl;
-        for (Segment s : this->poly_line) file << s.source() << " " << s.target() << std::endl;
-        file << "Algorithm: " << alg  << this->opt << std::endl;
-        file << "Area_initial: " << this->start_area << std::endl;
-        file << "Area: " << this->end_area << std::endl;
-        file << "Ratio_initial: " << (this->start_area / this->ch_area) << std::endl;
-        file << "Ratio: " << (this->end_area / this->ch_area) << std::endl;
-        file << "Construction time: " << time << " msec" << std::endl;
-        file.close();
-    } catch (...) {
-        throw;
-    }
-    return;
-}
+// void optimization::write_to_file(std::string alg, int time) const {
+//     try {
+//         std::ofstream file(this->out_file);
+//         file << "Optimal Area Polygonization" << std::endl;
+//         for (Point p : this->pl_points) file << p.x() << " " << p.y() << std::endl;
+//         for (Segment s : this->poly_line) file << s.source() << " " << s.target() << std::endl;
+//         file << "Algorithm: " << alg  << this->opt << std::endl;
+//         file << "Area_initial: " << this->start_area << std::endl;
+//         file << "Area: " << this->end_area << std::endl;
+//         file << "Ratio_initial: " << (this->start_area / this->ch_area) << std::endl;
+//         file << "Ratio: " << (this->end_area / this->ch_area) << std::endl;
+//         file << "Construction time: " << time << " msec" << std::endl;
+//         file.close();
+//     } catch (...) {
+//         throw;
+//     }
+//     return;
+// }
+
 double optimization::get_end_area(void) const {
     return this->end_area;
 }
 
 
 
-optimization::optimization(std::vector<Point> pl_points,std::vector<Segment> poly_line, std::string alg, std::string L, std::string opt, std::string alg_param, std::string out_file, double start_area, double ch_area)
-    :out_file(out_file), pl_points(pl_points),poly_line(poly_line), opt(opt), start_area(start_area), ch_area(ch_area) {
+optimization::optimization(std::vector<Point> pl_points,std::vector<Segment> poly_line, std::string alg, std::string L, std::string opt, std::string alg_param, double start_area, double ch_area)
+    :pl_points(pl_points),poly_line(poly_line), opt(opt), start_area(start_area), ch_area(ch_area) {
         try {
             this->L = std::stoi(L);
             if (!alg.compare("local_search")) {
@@ -624,7 +625,7 @@ optimization::optimization(std::vector<Point> pl_points,std::vector<Segment> pol
                     //get final area
                     this->end_area = std::abs(end_poly.area());
     
-                     this->write_to_file("simulated_annealing", std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count());
+                    //  this->write_to_file("simulated_annealing", std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count());
                     }
                 else if (!alg_param.compare("subdivision")) this->simulated_annealing_subdivision();
                 else throw std::invalid_argument("\'Annealing\' must be \'local\', \'global\' or \'subdivision\'");

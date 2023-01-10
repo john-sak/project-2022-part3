@@ -19,7 +19,6 @@ class polyline {
         std::vector<Segment> poly_line;
         int edge_sel;
         std::string init;
-        std::string out_file;
         double pl_area;
         double ch_area;
         void incremental(int);
@@ -34,9 +33,9 @@ class polyline {
         bool is_vis(Segment, Segment) const;
         Segment min_area(std::vector<Segment>, int) const;
         Segment max_area(std::vector<Segment>, int) const;
-        void write_to_file(std::string, int) const;
+        // void write_to_file(std::string, int) const;
     public:
-        polyline(std::vector<std::pair<float, float>>, std::string, std::string, std::string, std::string);
+        polyline(std::vector<std::pair<float, float>>, std::string, std::string, std::string);
         std::vector<Point> get_pl_points(void) const;
         std::vector<Segment> get_poly_line(void) const;
         double get_area(void) const;

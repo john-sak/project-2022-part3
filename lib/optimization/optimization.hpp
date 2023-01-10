@@ -18,7 +18,6 @@ class optimization {
         std::vector<Point> pl_points;
         std::vector<Segment> poly_line;
         int L;
-        std::string out_file;
         std::string opt;
         double threshold;
         std::string annealing;
@@ -34,7 +33,7 @@ class optimization {
         std::vector<Point> get_ch(std::vector<Point>);
         void write_to_file(std::string, int) const;
     public:
-        optimization(std::vector<Point>, std::vector<Segment>, std::string, std::string, std::string, std::string, std::string, double, double);
+        optimization(std::vector<Point>, std::vector<Segment>, std::string, std::string, std::string, std::string, double, double);
         double get_end_area(void) const;
 
 };
