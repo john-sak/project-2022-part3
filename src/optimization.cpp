@@ -147,10 +147,10 @@ void optimization::local_search(void) {
         double updated_area = std::abs(updated_poly.area());
         // get area difference
         if (!this->opt.compare("-max")) area_diff = updated_area - curr_area;
-        else if (!this->opt.compare("-max")) area_diff = curr_area - updated_area;
+        else if (!this->opt.compare("-min")) area_diff = curr_area - updated_area;
         // update segments
         this->poly_line = this->get_segment(this->pl_points);
-
+        
     } while (area_diff >= this->threshold);
 
     auto stop = std::chrono::high_resolution_clock::now();
