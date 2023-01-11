@@ -24,6 +24,7 @@ class optimization {
         double start_area;
         double end_area;
         double ch_area;
+        int time_remain;
         void local_search(void);
         void simulated_annealing_local(void);
         std::vector<Point> simulated_annealing_global(std::vector<Point>);
@@ -33,8 +34,9 @@ class optimization {
         std::vector<Point> get_ch(std::vector<Point>);
         void write_to_file(std::string, int) const;
     public:
-        optimization(std::vector<Point>, std::vector<Segment>, std::string, std::string, std::string, std::string, double, double);
+        optimization(std::vector<Point>, std::vector<Segment>, std::string, std::string, std::string, std::string, double, double, time_t);
         double get_end_area(void) const;
+        time_t get_time_remain(void) const;
 
 };
 

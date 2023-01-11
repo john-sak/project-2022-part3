@@ -53,8 +53,6 @@ void polyline::incremental(int init) {
 
 void polyline::convex_hull(void) {
     try {
-        auto start = std::chrono::high_resolution_clock::now();
-
         // get convex_hull of all points
         std::vector<Point> ch = this->get_ch(this->points);
 
@@ -64,6 +62,15 @@ void polyline::convex_hull(void) {
             if (i < ch.size() - 1) this->poly_line.push_back(Segment(ch[i], ch[i + 1]));
             else this->poly_line.push_back(Segment(ch[i], ch[0]));
         }
+
+        // set timers
+        time_t endwait;
+        time_t start = time(NULL);
+        time_t seconds =  500 * this->pl_points.size(); // end loop after this time has elapsed
+        time_t begin_timer =  time(NULL);
+
+        endwait = start + seconds;
+
 
         // for every edge in poly_line, find the closest visible point p and add it to the polyline
         // when there are no more edges to go through, we are done
@@ -116,8 +123,12 @@ void polyline::convex_hull(void) {
 
             // increment the size of the polyline to go through the edges we just added
             size++;
+            start = time(NULL);
+            if (start > endwait) break;
         }
-
+        time_t end_timer =  time(NULL);
+        this->time_remain = seconds - (end_timer - begin_timer);
+        if (time_remain <= 0) return;
         // get polygon segments in order
         this->poly_line.clear();
         this->poly_line = this->get_segment(this->pl_points);
@@ -133,7 +144,6 @@ void polyline::convex_hull(void) {
         for (auto it = ch.begin(); it != ch.end(); ++it) ch_poly.push_back(*it);
         this->ch_area = std::abs(ch_poly.area());
 
-        auto stop = std::chrono::high_resolution_clock::now();
 
         // write to output file
         // this->write_to_file("Convex_Hull", std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count());
@@ -243,7 +253,15 @@ void polyline::expand(int i) {
         // get convex hull of current polygon points
         curr_ch = get_ch(this->pl_points);
 
-        while (i < this->points.size()) {
+        // set timers
+        time_t endwait;
+        time_t start = time(NULL);
+        time_t seconds =  500 * this->pl_points.size(); // end loop after this time has elapsed
+        time_t begin_timer =  time(NULL);
+
+        endwait = start + seconds;
+
+        while (i < this->points.size() && start < endwait) {
             Point p = this->points[i];
 
             // insert next point to polygon line points
@@ -321,8 +339,10 @@ void polyline::expand(int i) {
             else this->pl_points.insert(pindex, this->points[i]);
 
             i++;
+            start = time(NULL);
         }
-
+        time_t end_timer =  time(NULL);
+        this->time_remain = seconds - (end_timer - begin_timer);
         return;
     } catch (...) {
         throw;
@@ -531,24 +551,8 @@ Segment polyline::max_area(std::vector<Segment> vis_edges, int i) const {
     }
 }
 
-// void polyline::write_to_file(std::string alg, int time) const {
-//     try {
-//         std::ofstream file(this->out_file);
-//         file << "Polygonization" << std::endl;
-//         for (Point p : this->pl_points) file << p.x() << " " << p.y() << std::endl;
-//         for (Segment s : this->poly_line) file << s.source() << " " << s.target() << std::endl;
-//         file << "Algorithm: " << alg << "_" << this->edge_sel << std::endl;
-//         file << "Area: " << this->pl_area << std::endl;
-//         file << "Ratio: " << (this->pl_area / this->ch_area) << std::endl;
-//         file << "Construction time: " << time << " msec" << std::endl;
-//         file.close();
-//     } catch (...) {
-//         throw;
-//     }
-//     return;
-// }
 
-polyline::polyline(std::vector<std::pair<float, float>> vec, std::string alg, std::string edge_sel, std::string init): init(init) {
+polyline::polyline(std::vector<std::pair<float, float>> vec, std::string alg, std::string edge_sel, std::string init): init(init),time_remain(0) {
     try {
         //initialize points
         for(auto it = vec.begin(); it != vec.end(); ++it) this->points.push_back(Point(it->first, it->second));
@@ -587,3 +591,6 @@ double polyline::get_ch_area(void) const {
     return this->ch_area;
 }
 
+time_t polyline::get_time_remain(void) const {
+    return this->time_remain;
+}
