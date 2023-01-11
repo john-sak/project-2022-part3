@@ -21,6 +21,7 @@ class polyline {
         std::string init;
         double pl_area;
         double ch_area;
+        time_t time_remain;
         void incremental(int);
         void convex_hull(void);
         void sort_points(int);
@@ -40,6 +41,7 @@ class polyline {
         std::vector<Segment> get_poly_line(void) const;
         double get_area(void) const;
         double get_ch_area(void) const;
+        time_t get_time_remain(void) const;
 };
 
 #endif
