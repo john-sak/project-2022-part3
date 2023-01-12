@@ -160,7 +160,7 @@ void optimization::local_search(void) {
         else if (!this->opt.compare("-min")) area_diff = curr_area - updated_area;
         // update segments
         this->poly_line = this->get_segment(this->pl_points);
-        start = time(NULL);
+        start_time = time(NULL);
 
         if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
         start_time = time(NULL);
@@ -379,42 +379,40 @@ std::vector<Point> optimization::simulated_annealing_global(std::vector<Point> p
         Polygon temp_poly;
         for (auto it = temp_points.begin(); it != temp_points.end(); ++it) temp_poly.push_back(*it);
 
-        if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+        if ((this->time_remain -= time(NULL) - start_time) <= 0) return points;
         start_time = time(NULL);
 
         // check for simplicity
         if (!temp_poly.is_simple()) continue;
         
         if (!this->opt.compare("-max")) {
-                // get updated area
-                double temp_area= std::abs(temp_poly.area());
-                double diff = temp_area - curr_area;
-                // get updated energy
-                updated_E = points.size() * (1 - temp_area / ch_area);
-                // check if area is optimized or metropolis criterion is valid
-                if (diff <= 0) 
-                    if (exp( - ( updated_E - E) / T) < R) continue;
-                // update polygon line
-                points = temp_points;
-
+            // get updated area
+            double temp_area= std::abs(temp_poly.area());
+            double diff = temp_area - curr_area;
+            // get updated energy
+            updated_E = points.size() * (1 - temp_area / ch_area);
+            // check if area is optimized or metropolis criterion is valid
+            if (diff <= 0) 
+                if (exp( - (updated_E - E) / T) < R) continue;
+            // update polygon line
+            points = temp_points;
         }
         else if (!this->opt.compare("-min")) {
-                // get updated area
-                double temp_area= std::abs(temp_poly.area());
-                double diff = curr_area - temp_area;
-                // get updated energy
-                updated_E = points.size() * temp_area / ch_area;
-                // check if area is optimized or metropolis criterion is valid
-                if (diff <= 0) 
-                    if (exp( - ( updated_E - E) / T) < R) continue;
-                // update polygon line
-                points = temp_points;
-
+            // get updated area
+            double temp_area= std::abs(temp_poly.area());
+            double diff = curr_area - temp_area;
+            // get updated energy
+            updated_E = points.size() * temp_area / ch_area;
+            // check if area is optimized or metropolis criterion is valid
+            if (diff <= 0) 
+                if (exp( - ( updated_E - E) / T) < R) continue;
+            // update polygon line
+            points = temp_points;
         }
         // update T
         T = T - (double) 1 / this->L;
 
-        if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+        if ((this->time_remain -= time(NULL) - start_time) <= 0) return points;
         start_time = time(NULL);
     }
 
@@ -484,7 +482,12 @@ void optimization::simulated_annealing_subdivision(void) {
 
         for (auto it = sub_points[i].begin(); it != sub_points[i].end(); ++it) floats.push_back(std::make_pair((float) it->x(), (float) it->y()));
 
-        polyline S(floats, "incremental", "1", "1a");
+        if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+
+        polyline S(floats, "incremental", "1", "1a", this->time_remain);
+
+        if ((this->time_remain = S.get_time_remain()) <= 0) return;
+        start_time = time(NULL);
 
         polygons[i].resize(sub_points[i].size());
 

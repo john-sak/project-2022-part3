@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
                             // for initialization 1a, 1b, 2a, 2b
                             for (int k = 0; k < 4; k++) {
 
-                                //create initial polygon    
+                                //create initial polygon
                                 polyline S(arg.get_points(), poly_algos[i], edge_sel[j], init[k], timer);
                                 time_t time_remain = S.get_time_remain();
 
@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
                                         float score;
 
                                         optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
-                                        
+
                                         score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
                                         if (score < best_scores[4]) best_scores[4] = score;
                                         if (score > best_scores[6]) best_scores[6] = score;
@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
                         } else {
 
                             //create initial polygon
-                            polyline S(arg.get_points(), poly_algos[i], edge_sel[j], timer);
+                            polyline S(arg.get_points(), poly_algos[i], edge_sel[j], "", timer);
                             time_t time_remain = S.get_time_remain();
 
                             if (time_remain <= 0) continue;
@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
 
                             // if simulated_annealing
                             } else {
-                                for (int m = 0; m < 2; m++) {                                    
+                                for (int m = 0; m < 2; m++) {
 
                                     float score;
 

@@ -226,7 +226,7 @@ int polyline::init_triangle(void) {
 
             return 3;
         }
-        
+
         //if initial points are collinear
         int i = 3;
         int flag = 1;
@@ -244,7 +244,7 @@ int polyline::init_triangle(void) {
                 this->poly_line.push_back(Segment(this->points[i], this->points[0]));
             }
 
-            if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+            if ((this->time_remain -= time(NULL) - start_time) <= 0) return -1;
             start_time = time(NULL);
 
             i++;
