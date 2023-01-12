@@ -24,9 +24,8 @@ bool compareAreaChange(const update_node& a, const update_node& b)
     return a.area_change > b.area_change;
 }
 
-
-
 void optimization::local_search(void) {
+    time_t start_time = time(NULL);
 
     std::vector<Point> ch_points = this->get_ch(this->pl_points);
     Polygon ch;
@@ -39,14 +38,7 @@ void optimization::local_search(void) {
     for (auto it = this->pl_points.begin(); it != this->pl_points.end(); ++it) start_poly.push_back(*it);
     this->start_area = std::abs(start_poly.area());
 
-
     double area_diff;
-    //set timers
-    time_t endwait;
-    time_t start = time(NULL);
-    time_t seconds =  500 * this->pl_points.size(); // end loop after this time has elapsed
-    time_t begin_timer =  time(NULL);
-    endwait = start + seconds;
 
     do {
         // get initial polygon area
@@ -56,6 +48,9 @@ void optimization::local_search(void) {
 
         //vector of all possible updates
         std::vector<update_node> updates;
+
+        if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+        start_time = time(NULL);
 
         for (auto it = this->poly_line.begin(); it != this->poly_line.end(); ++it) {
             for (int i = 1; i <= this->L; i++) {
@@ -73,14 +68,16 @@ void optimization::local_search(void) {
 
                     Polygon temp_poly;
                     for (auto it3 = temp_points.begin(); it3 != temp_points.end(); ++it3) temp_poly.push_back(*it3);
+
+                    if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+                    start_time = time(NULL);
+
                     // check for polygon simplicity
                     if (!temp_poly.is_simple()) continue;
-
 
                     if (!this->opt.compare("-max")) {
                         // get new polygon area
                         double temp_area= std::abs(temp_poly.area());
-                        
 
                         double diff = temp_area - curr_area;
                         // check is area is optimized 
@@ -114,18 +111,24 @@ void optimization::local_search(void) {
                         }
                     }
                 }
-
+                        
+                if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+                start_time = time(NULL);
             }
         }        
+
         // sort update list based on area optimization
         std::sort(updates.begin(),updates.end(),compareAreaChange);
+
         // loop on update list
         for (auto it = updates.begin(); it != updates.end(); ++it) {
+
             // update polygon
             std::vector<Point> temp_points = this->replace_edges(it->e, it->V);
 
             Polygon temp_poly;
             for (auto it2 = temp_points.begin(); it2 != temp_points.end(); ++it2) temp_poly.push_back(*it2);
+
             // check for simplicity
             if (!temp_poly.is_simple()) continue;
 
@@ -147,6 +150,7 @@ void optimization::local_search(void) {
                 else this->pl_points = temp_points;
             }
         }
+
         // get optimized area
         Polygon updated_poly;
         for (auto it = this->pl_points.begin(); it != this->pl_points.end(); ++it) updated_poly.push_back(*it);
@@ -157,12 +161,12 @@ void optimization::local_search(void) {
         // update segments
         this->poly_line = this->get_segment(this->pl_points);
         start = time(NULL);
-        
-    } while (area_diff >= this->threshold && start < endwait);
 
-    time_t end_timer =  time(NULL);
-    this->time_remain = seconds - (end_timer - begin_timer);
-    if (time_remain <= 0) return;
+        if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+        start_time = time(NULL);
+        
+    } while (area_diff >= this->threshold);
+
     // get final area
     Polygon end_poly;
     for (auto it = this->pl_points.begin(); it != this->pl_points.end(); ++it) end_poly.push_back(*it);
@@ -170,9 +174,13 @@ void optimization::local_search(void) {
 
     // this->write_to_file("local_search", std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count());
     
+    this->time_remain -= time(NULL) - start_time;
+    return;
 }
 
 void optimization::simulated_annealing_local(void) {
+    time_t start_time = time(NULL);
+
     double T = 1.0;
     double R;
     double E;
@@ -185,14 +193,7 @@ void optimization::simulated_annealing_local(void) {
     Tree tree;
     for (auto it = this->pl_points.begin(); it != this->pl_points.end(); ++it) tree.insert(*it);
 
-    //set timers
-    time_t endwait;
-    time_t start = time(NULL);
-    time_t seconds =  500 * this->pl_points.size(); // end loop after this time has elapsed
-    time_t begin_timer =  time(NULL);
-    endwait = start + seconds;
-
-    while (T >= 0 && start < endwait) {
+    while (T >= 0) {
         srand((unsigned) time(NULL));
         R = (double) rand() / RAND_MAX;
 
@@ -232,6 +233,8 @@ void optimization::simulated_annealing_local(void) {
         Fuzzy_iso_box exact_range(lo_le_point, up_ri_point);
         tree.search(std::back_inserter(result), exact_range);
 
+        if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+        start_time = time(NULL);
 
         std::vector<Segment> temp_line = this->get_segment(temp_points);
         std::vector<Segment> lines;
@@ -279,8 +282,10 @@ void optimization::simulated_annealing_local(void) {
                 break;
 
             }
-
         }
+
+        if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+        start_time = time(NULL);
             
         if (flag == 1) continue;
 
@@ -309,23 +314,26 @@ void optimization::simulated_annealing_local(void) {
         }
         // update T
         T = T - (double) 1 / this->L;
-        start = time(NULL);
-    }
 
-    time_t end_timer =  time(NULL);
-    this->time_remain = seconds - (end_timer - begin_timer);
-    if (time_remain <= 0) return;
+        if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+        start_time = time(NULL);
+    }
 
     // update polygon segment
     this->poly_line = this->get_segment(this->pl_points);
     Polygon end_poly;
     for (auto it = this->pl_points.begin(); it != this->pl_points.end(); ++it) end_poly.push_back(*it);
+
     // get optimized area
     this->end_area = std::abs(end_poly.area());
 
+    this->time_remain -= time(NULL) - start_time;
+    return;
 }
 
 std::vector<Point> optimization::simulated_annealing_global(std::vector<Point> points) {
+    time_t start_time = time(NULL);
+
     double T = 1.0;
     double R;
     // get convex hull
@@ -344,14 +352,8 @@ std::vector<Point> optimization::simulated_annealing_global(std::vector<Point> p
     // calculate initial energy
     if (!this->opt.compare("-max")) E = points.size() * (1 - start_area / ch_area);
     else if (!this->opt.compare("-min")) E = points.size() * start_area / ch_area;
-    //set timers
-    time_t endwait;
-    time_t start = time(NULL);
-    time_t seconds =  500 * this->pl_points.size(); // end loop after this time has elapsed
-    time_t begin_timer =  time(NULL);
-    endwait = start + seconds;
 
-    while (T >= 0 && start < endwait) {
+    while (T >= 0) {
         srand((unsigned) time(NULL));
         R = (double) rand() / RAND_MAX;
         Polygon curr_poly;
@@ -376,10 +378,12 @@ std::vector<Point> optimization::simulated_annealing_global(std::vector<Point> p
 
         Polygon temp_poly;
         for (auto it = temp_points.begin(); it != temp_points.end(); ++it) temp_poly.push_back(*it);
+
+        if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+        start_time = time(NULL);
+
         // check for simplicity
         if (!temp_poly.is_simple()) continue;
-        
-
         
         if (!this->opt.compare("-max")) {
                 // get updated area
@@ -409,17 +413,18 @@ std::vector<Point> optimization::simulated_annealing_global(std::vector<Point> p
         }
         // update T
         T = T - (double) 1 / this->L;
-        start = time(NULL);
+
+        if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+        start_time = time(NULL);
     }
-    time_t end_timer =  time(NULL);
-    this->time_remain = seconds - (end_timer - begin_timer);
-    if (time_remain <= 0) return {};
 
     return points;
 }
 
 void optimization::simulated_annealing_subdivision(void) {
-    // m to be change
+    time_t start_time = time(NULL);
+
+    // m to be changed
     int m = 10;
 
     std::sort(this->pl_points.begin(), this->pl_points.end(), [] (const Point &a, const Point &b) {
@@ -464,16 +469,20 @@ void optimization::simulated_annealing_subdivision(void) {
         k++;
     }
 
+    if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+    start_time = time(NULL);
+
     std::vector<Point> polygons[k];
     std::vector<Point> lower_hull;
     std::vector<Point> upper_hull;
 
     //create init  polygon
     for (int i = 0; i < k; i++) {
+
         // sub_points[i] contains Point, we want std::pair<float, float>
         std::vector<std::pair<float, float>> floats;
 
-        for ( auto it = sub_points[i].begin(); it != sub_points[i].end(); ++it) floats.push_back(std::make_pair((float) it->x(),  (float) it->y()));
+        for (auto it = sub_points[i].begin(); it != sub_points[i].end(); ++it) floats.push_back(std::make_pair((float) it->x(), (float) it->y()));
 
         polyline S(floats, "incremental", "1", "1a");
 
@@ -501,6 +510,10 @@ void optimization::simulated_annealing_subdivision(void) {
             }
             if (ok != 0) break;
         }
+
+        if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+        start_time = time(NULL);
+
         if (ok != 1) throw std::exception();
 
         if (i == 0) {
@@ -531,6 +544,9 @@ void optimization::simulated_annealing_subdivision(void) {
                 for (auto it = q_point; it != polygons[i].begin(); it--) upper_hull.insert(start, *it);
             }
         }
+
+        if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+        start_time = time(NULL);
     }
 
     std::vector<Point> all_points;
@@ -539,6 +555,8 @@ void optimization::simulated_annealing_subdivision(void) {
 
     for (auto it = all_points.begin(); it != all_points.end(); it++) std::cout << *it << std::endl;
 
+    this->time_remain -= time(NULL) - start_time;
+    return;
 }
 
 std::vector<Point> optimization::replace_edges(Segment e, std::vector<Segment> V) {
@@ -610,7 +628,7 @@ time_t optimization::get_time_remain(void) const {
 }
 
 optimization::optimization(std::vector<Point> pl_points,std::vector<Segment> poly_line, std::string alg, std::string L, std::string opt, std::string alg_param, double start_area, double ch_area, time_t time_remain)
-    :pl_points(pl_points),poly_line(poly_line), opt(opt), start_area(start_area), ch_area(ch_area),time_remain(time_remain) {
+    :pl_points(pl_points), poly_line(poly_line), opt(opt), start_area(start_area), ch_area(ch_area), time_remain(time_remain) {
         try {
             this->L = std::stoi(L);
             if (!alg.compare("local_search")) {

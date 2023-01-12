@@ -24,22 +24,35 @@ void polyline::incremental(int init) {
         // sort points
         this->sort_points(init);
 
+        if (this->time_remain <= 0) return;
+
         // initialize polygon
         int i = this->init_triangle();
 
+        if (this->time_remain <= 0) return;
+
         // expand polygon
         this->expand(i);
+
+        if (this->time_remain <= 0) return;
+
+        time_t start_time = time(NULL);
 
         //get polygon area
         Polygon pl_poly;
         for(auto it = this->poly_line.begin(); it != this->poly_line.end(); ++it) pl_poly.push_back(it->target());
         this->pl_area = std::abs(pl_poly.area());
 
+        if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+        start_time = time(NULL);
+
         //get convex hull area
         Polygon ch_poly;
         std::vector<Point> ch_points = this->get_ch(this->points);
         for (auto it = ch_points.begin(); it != ch_points.end(); ++it) ch_poly.push_back(*it);
         this->ch_area = std::abs(ch_poly.area());
+
+        this->time_remain -= time(NULL) - start_time;
 
         auto stop = std::chrono::high_resolution_clock::now();
 
@@ -53,6 +66,8 @@ void polyline::incremental(int init) {
 
 void polyline::convex_hull(void) {
     try {
+        time_t start_time = time(NULL);
+
         // get convex_hull of all points
         std::vector<Point> ch = this->get_ch(this->points);
 
@@ -63,14 +78,8 @@ void polyline::convex_hull(void) {
             else this->poly_line.push_back(Segment(ch[i], ch[0]));
         }
 
-        // set timers
-        time_t endwait;
-        time_t start = time(NULL);
-        time_t seconds =  500 * this->pl_points.size(); // end loop after this time has elapsed
-        time_t begin_timer =  time(NULL);
-
-        endwait = start + seconds;
-
+        if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+        start_time = time(NULL);
 
         // for every edge in poly_line, find the closest visible point p and add it to the polyline
         // when there are no more edges to go through, we are done
@@ -104,6 +113,9 @@ void polyline::convex_hull(void) {
                 }
             }
 
+            if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+            start_time = time(NULL);
+
             // if no visible points exist for this edge, continue to the next one
             if (found == 0) continue;
 
@@ -120,15 +132,13 @@ void polyline::convex_hull(void) {
             if (pindex == this->pl_points.begin()) this->pl_points.push_back(this->points[p_index]);
             else this->pl_points.insert(pindex, this->points[p_index]);
 
-
             // increment the size of the polyline to go through the edges we just added
             size++;
-            start = time(NULL);
-            if (start > endwait) break;
+
+            if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+            start_time = time(NULL);
         }
-        time_t end_timer =  time(NULL);
-        this->time_remain = seconds - (end_timer - begin_timer);
-        if (time_remain <= 0) return;
+
         // get polygon segments in order
         this->poly_line.clear();
         this->poly_line = this->get_segment(this->pl_points);
@@ -144,9 +154,11 @@ void polyline::convex_hull(void) {
         for (auto it = ch.begin(); it != ch.end(); ++it) ch_poly.push_back(*it);
         this->ch_area = std::abs(ch_poly.area());
 
-
         // write to output file
         // this->write_to_file("Convex_Hull", std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count());
+
+        this->time_remain -= time(NULL) - start_time;
+        return;
     } catch (...) {
         throw;
     }
@@ -155,6 +167,8 @@ void polyline::convex_hull(void) {
 
 void polyline::sort_points(int type) {
     try {
+        time_t start_time = time(NULL);
+
         switch (type) {
             case 1:
                 // sort x descending
@@ -187,6 +201,8 @@ void polyline::sort_points(int type) {
             default:
                 throw "Error: Couldn't sort vector";
         }
+
+        this->time_remain -= time(NULL) - start_time;
         return;
     } catch (...) {
         throw;
@@ -195,6 +211,8 @@ void polyline::sort_points(int type) {
 
 int polyline::init_triangle(void) {
     try {
+        time_t start_time = time(NULL);
+
         this->pl_points.push_back(this->points[0]);
         this->pl_points.push_back(this->points[1]);
         this->pl_points.push_back(this->points[2]);
@@ -226,8 +244,13 @@ int polyline::init_triangle(void) {
                 this->poly_line.push_back(Segment(this->points[i], this->points[0]));
             }
 
+            if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+            start_time = time(NULL);
+
             i++;
         } while (flag);
+
+        this->time_remain -= time(NULL) - start_time;
 
         // return number of points needed for triangle creation
         return i;
@@ -238,6 +261,8 @@ int polyline::init_triangle(void) {
 
 void polyline::expand(int i) {
     try {
+        time_t start_time = time(NULL);
+
         // current convex hull variable
         std::vector<Point> curr_ch;
 
@@ -253,15 +278,7 @@ void polyline::expand(int i) {
         // get convex hull of current polygon points
         curr_ch = get_ch(this->pl_points);
 
-        // set timers
-        time_t endwait;
-        time_t start = time(NULL);
-        time_t seconds =  500 * this->pl_points.size(); // end loop after this time has elapsed
-        time_t begin_timer =  time(NULL);
-
-        endwait = start + seconds;
-
-        while (i < this->points.size() && start < endwait) {
+        while (i < this->points.size()) {
             Point p = this->points[i];
 
             // insert next point to polygon line points
@@ -298,6 +315,9 @@ void polyline::expand(int i) {
                 }
             }
 
+            if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+            start_time = time(NULL);
+
             // for every red find visible
             vis_edges = this->get_vis_edges(i, red_edges);
 
@@ -322,6 +342,9 @@ void polyline::expand(int i) {
                     throw "Error: Wrong edge_selection value!";
             }
 
+            if ((this->time_remain -= time(NULL) - start_time) <= 0) return;
+            start_time = time(NULL);
+
             // remove point to add it to the right place
             this->pl_points.pop_back();
 
@@ -339,10 +362,9 @@ void polyline::expand(int i) {
             else this->pl_points.insert(pindex, this->points[i]);
 
             i++;
-            start = time(NULL);
+
         }
-        time_t end_timer =  time(NULL);
-        this->time_remain = seconds - (end_timer - begin_timer);
+        this->time_remain -= time(NULL) - start_time;
         return;
     } catch (...) {
         throw;
@@ -552,7 +574,7 @@ Segment polyline::max_area(std::vector<Segment> vis_edges, int i) const {
 }
 
 
-polyline::polyline(std::vector<std::pair<float, float>> vec, std::string alg, std::string edge_sel, std::string init): init(init),time_remain(0) {
+polyline::polyline(std::vector<std::pair<float, float>> vec, std::string alg, std::string edge_sel, std::string init, time_t timer): init(init), time_remain(timer) {
     try {
         //initialize points
         for(auto it = vec.begin(); it != vec.end(); ++it) this->points.push_back(Point(it->first, it->second));

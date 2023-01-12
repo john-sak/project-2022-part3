@@ -36,7 +36,7 @@ class polyline {
         Segment max_area(std::vector<Segment>, int) const;
         // void write_to_file(std::string, int) const;
     public:
-        polyline(std::vector<std::pair<float, float>>, std::string, std::string, std::string);
+        polyline(std::vector<std::pair<float, float>>, std::string, std::string, std::string, time_t);
         std::vector<Point> get_pl_points(void) const;
         std::vector<Segment> get_poly_line(void) const;
         double get_area(void) const;

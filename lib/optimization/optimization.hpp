@@ -45,4 +45,5 @@ typedef struct update_node{
     std::vector<Segment> V;
     double area_change;
 } update_node;
+
 #endif
