@@ -1,5 +1,7 @@
 #include <iostream>
 #include <string>
+#include <map>
+#include <algorithm>
 #include <dirent.h>
 #include <time.h>
 
@@ -45,11 +47,7 @@ int main(int argc, char *argv[]) {
         struct dirent *dir;
         if ((d = opendir(path.c_str())) == NULL) throw std::invalid_argument("Cannot open directory \'" + path + "\'");
 
-        // write initial lines to file
-        std::ofstream file(out);
-        file << "      ||                  local_search                 ||              simulated_annealing              ||" << std::endl;
-        file << "======||===============================================||===============================================||" << std::endl;
-        file << "Size  || min score | max score | min bound | max bound || min score | max score | min bound | max bound ||" << std::endl;
+        std::map<int, float[8]> scores_per_size;
 
         while ((dir = readdir(d)) != NULL) {
             if (!std::string(dir->d_name).compare("..") || !std::string(dir->d_name).compare(".")) continue;
@@ -57,7 +55,7 @@ int main(int argc, char *argv[]) {
 
             // write size of points of file
             int size = arg.get_points().size();
-            file << std::left << std::setw(6) << size << "|";
+            float best_scores[8] = {1, 0, 0, 1, 1, 0, 0, 1};
 
             time_t timer = 500 * size;
 
@@ -65,11 +63,6 @@ int main(int argc, char *argv[]) {
 
             // for local_search, simulated_annealing
             for (int l = 0; l < 2; l++) {
-
-                double min_score = 0;
-                double max_score = 0;
-                double bound_min = 0;
-                double bound_max = 1;
 
                 // for incremental, convex_hull
                 for (int i = 0; i < 2; i++) {
@@ -92,37 +85,37 @@ int main(int argc, char *argv[]) {
                                 // if local_search
                                 if (l == 0) {
 
+                                    float score;
+
                                     optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
 
-                                    if (O_min.get_time_remain() > 0) {
-                                        min_score += O_min.get_end_area();
-                                        if ((O_min.get_end_area() / S.get_ch_area()) > bound_min) bound_min = O_min.get_end_area() / S.get_ch_area();
-                                    } else bound_min = 1;
+                                    score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
+                                    if (score < best_scores[0]) best_scores[0] = score;
+                                    if (score > best_scores[2]) best_scores[2] = score;
 
                                     optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
 
-                                    if (O_max.get_time_remain() > 0) {
-                                        max_score += O_max.get_end_area();
-                                        if ((O_max.get_end_area()/ S.get_ch_area()) < bound_max) bound_max = O_max.get_end_area()/ S.get_ch_area();
-                                    } else bound_max = 0;
+                                    score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
+                                    if (score > best_scores[1]) best_scores[1] = score;
+                                    if (score < best_scores[3]) best_scores[3] = score;
 
                                 // if simulated_annealing
                                 } else {
                                     for (int m = 0; m < 2; m++) {
 
-                                        optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
+                                        float score;
 
-                                        if (O_min.get_time_remain() > 0) {
-                                            min_score += O_min.get_end_area();
-                                            if ((O_min.get_end_area() / S.get_ch_area()) > bound_min) bound_min = O_min.get_end_area() / S.get_ch_area();
-                                        } else bound_min = 1;
+                                        optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
+                                        
+                                        score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
+                                        if (score < best_scores[4]) best_scores[4] = score;
+                                        if (score > best_scores[6]) best_scores[6] = score;
 
                                         optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
 
-                                        if (O_max.get_time_remain() > 0) {
-                                            max_score += O_max.get_end_area();
-                                            if ((O_max.get_end_area()/ S.get_ch_area()) < bound_max) bound_max = O_max.get_end_area()/ S.get_ch_area();
-                                        } else bound_max = 0;
+                                        score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
+                                        if (score > best_scores[5]) best_scores[5] = score;
+                                        if (score < best_scores[7]) best_scores[7] = score;
                                     }
                                 }
                             }
@@ -139,53 +132,77 @@ int main(int argc, char *argv[]) {
                             // if local_search
                             if (l == 0) {
 
+                                float score;
+
                                 optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
 
-                                if (O_min.get_time_remain() > 0) {
-                                    min_score += O_min.get_end_area();
-                                    if ((O_min.get_end_area() / S.get_ch_area()) > bound_min) bound_min = O_min.get_end_area() / S.get_ch_area();
-                                } else bound_min = 1;
+                                score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
+                                if (score < best_scores[0]) best_scores[0] = score;
+                                if (score > best_scores[2]) best_scores[2] = score;
 
                                 optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
 
-                                if (O_max.get_time_remain() > 0) {
-                                    max_score += O_max.get_end_area();
-                                    if ((O_max.get_end_area()/ S.get_ch_area()) < bound_max) bound_max = O_max.get_end_area()/ S.get_ch_area();
-                                } else bound_max = 0;
+                                score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
+                                if (score > best_scores[1]) best_scores[1] = score;
+                                if (score < best_scores[3]) best_scores[3] = score;
 
                             // if simulated_annealing
                             } else {
                                 for (int m = 0; m < 2; m++) {                                    
 
+                                    float score;
+
                                     optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
 
-                                    if (O_min.get_time_remain() > 0) {
-                                        min_score += O_min.get_end_area();
-                                        if ((O_min.get_end_area() / S.get_ch_area()) > bound_min) bound_min = O_min.get_end_area() / S.get_ch_area();
-                                    } else bound_min = 1;
+                                    score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
+                                    if (score < best_scores[4]) best_scores[4] = score;
+                                    if (score > best_scores[6]) best_scores[6] = score;
 
                                     optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
 
-                                    if (O_max.get_time_remain() > 0) {
-                                        max_score += O_max.get_end_area();
-                                        if ((O_max.get_end_area() / S.get_ch_area()) < bound_max) bound_max = O_max.get_end_area()/ S.get_ch_area();
-                                    } else bound_max = 0;                                    
+                                    score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
+                                    if (score > best_scores[5]) best_scores[5] = score;
+                                    if (score < best_scores[7]) best_scores[7] = score;
                                 }
                             }
                         }
                     }
                 }
-
-                // write results of current algorithm to output file
-                file << std::left << "|" << std::setw(11) << min_score << "|" << std::setw(11) << max_score << "|" << std::setw(11) << bound_min << "|" << std::setw(11) << bound_max << "|";
-                    
             }
 
-            // write new line to file
-            file << "|" << std::endl;
+            std::pair<std::map<int, float[8]>::iterator, bool> ret = scores_per_size.insert(std::pair<int, float[8]> (size, best_scores));
+
+            if (ret.second == false) {
+                ret.first->second[0] += best_scores[0];
+                ret.first->second[2] += best_scores[2];
+                ret.first->second[4] += best_scores[4];
+                ret.first->second[6] += best_scores[6];
+
+                ret.first->second[1] = std::max({ret.first->second[1], best_scores[1]});
+                ret.first->second[1] = std::min({ret.first->second[3], best_scores[3]});
+                ret.first->second[1] = std::max({ret.first->second[5], best_scores[5]});
+                ret.first->second[1] = std::min({ret.first->second[7], best_scores[7]});
+            }
         }
-        file.close();
         closedir(d);
+
+        // write results to file
+        std::ofstream file(out);
+
+        file << "      ||                  local_search                 ||              simulated_annealing              ||" << std::endl;
+        file << "======||===============================================||===============================================||" << std::endl;
+        file << " size || min score | max score | min bound | max bound || min score | max score | min bound | max bound ||" << std::endl;
+
+        for (auto& it: scores_per_size) {
+            file << std::left << std::setw(6) << it.first << "|";
+            for (int i = 0; i < 8; i++) {
+                file << std::left << "|" << std::setw(11) << it.second[i];
+                if (i == 3) file << "|";
+            }
+            file << "||" << std::endl;
+        }
+
+        file.close();
     } catch (std::invalid_argument const &ex) {
         std::cerr << ex.what() << std::endl;
         std::cerr << "Usage: ./evaluate -i <point set path> -o <output file> -preprocess <optional>" << std::endl;
