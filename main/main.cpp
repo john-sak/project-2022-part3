@@ -12,6 +12,10 @@
 #define DEFAULT_L "10"
 #define DEFAULT_THRESHOLD "0.1"
 
+typedef struct {
+    float score[8];
+} Scores;
+
 int main(int argc, char *argv[]) {
 
     if (argc < 5) throw std::invalid_argument("Wrong arguments!");
@@ -47,7 +51,7 @@ int main(int argc, char *argv[]) {
         struct dirent *dir;
         if ((d = opendir(path.c_str())) == NULL) throw std::invalid_argument("Cannot open directory \'" + path + "\'");
 
-        std::map<int, float[8]> scores_per_size;
+        std::map<int, Scores> scores_per_size;
 
         while ((dir = readdir(d)) != NULL) {
             if (!std::string(dir->d_name).compare("..") || !std::string(dir->d_name).compare(".")) continue;
@@ -55,7 +59,7 @@ int main(int argc, char *argv[]) {
 
             // write size of points of file
             int size = arg.get_points().size();
-            float best_scores[8] = {1, 0, 0, 1, 1, 0, 0, 1};
+            Scores best_scores = {1, 0, 0, 1, 1, 0, 0, 1};
 
             time_t timer = 500 * size;
 
@@ -90,14 +94,14 @@ int main(int argc, char *argv[]) {
                                     optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
 
                                     score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
-                                    if (score < best_scores[0]) best_scores[0] = score;
-                                    if (score > best_scores[2]) best_scores[2] = score;
+                                    if (score < best_scores.score[0]) best_scores.score[0] = score;
+                                    if (score > best_scores.score[2]) best_scores.score[2] = score;
 
                                     optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
 
                                     score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
-                                    if (score > best_scores[1]) best_scores[1] = score;
-                                    if (score < best_scores[3]) best_scores[3] = score;
+                                    if (score > best_scores.score[1]) best_scores.score[1] = score;
+                                    if (score < best_scores.score[3]) best_scores.score[3] = score;
 
                                 // if simulated_annealing
                                 } else {
@@ -108,14 +112,14 @@ int main(int argc, char *argv[]) {
                                         optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
 
                                         score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
-                                        if (score < best_scores[4]) best_scores[4] = score;
-                                        if (score > best_scores[6]) best_scores[6] = score;
+                                        if (score < best_scores.score[4]) best_scores.score[4] = score;
+                                        if (score > best_scores.score[6]) best_scores.score[6] = score;
 
                                         optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
 
                                         score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
-                                        if (score > best_scores[5]) best_scores[5] = score;
-                                        if (score < best_scores[7]) best_scores[7] = score;
+                                        if (score > best_scores.score[5]) best_scores.score[5] = score;
+                                        if (score < best_scores.score[7]) best_scores.score[7] = score;
                                     }
                                 }
                             }
@@ -137,14 +141,14 @@ int main(int argc, char *argv[]) {
                                 optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
 
                                 score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
-                                if (score < best_scores[0]) best_scores[0] = score;
-                                if (score > best_scores[2]) best_scores[2] = score;
+                                if (score < best_scores.score[0]) best_scores.score[0] = score;
+                                if (score > best_scores.score[2]) best_scores.score[2] = score;
 
                                 optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
 
                                 score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
-                                if (score > best_scores[1]) best_scores[1] = score;
-                                if (score < best_scores[3]) best_scores[3] = score;
+                                if (score > best_scores.score[1]) best_scores.score[1] = score;
+                                if (score < best_scores.score[3]) best_scores.score[3] = score;
 
                             // if simulated_annealing
                             } else {
@@ -155,14 +159,14 @@ int main(int argc, char *argv[]) {
                                     optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
 
                                     score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
-                                    if (score < best_scores[4]) best_scores[4] = score;
-                                    if (score > best_scores[6]) best_scores[6] = score;
+                                    if (score < best_scores.score[4]) best_scores.score[4] = score;
+                                    if (score > best_scores.score[6]) best_scores.score[6] = score;
 
                                     optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
 
                                     score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
-                                    if (score > best_scores[5]) best_scores[5] = score;
-                                    if (score < best_scores[7]) best_scores[7] = score;
+                                    if (score > best_scores.score[5]) best_scores.score[5] = score;
+                                    if (score < best_scores.score[7]) best_scores.score[7] = score;
                                 }
                             }
                         }
@@ -170,18 +174,18 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-            std::pair<std::map<int, float[8]>::iterator, bool> ret = scores_per_size.insert(std::pair<int, float[8]> (size, best_scores));
+            std::pair<std::map<int, Scores>::iterator, bool> ret = scores_per_size.insert(std::pair<int, Scores> (size, best_scores));
 
             if (ret.second == false) {
-                ret.first->second[0] += best_scores[0];
-                ret.first->second[2] += best_scores[2];
-                ret.first->second[4] += best_scores[4];
-                ret.first->second[6] += best_scores[6];
+                ret.first->second->score[0] += best_scores.score[0];
+                ret.first->second->score[2] += best_scores.score[2];
+                ret.first->second->score[4] += best_scores.score[4];
+                ret.first->second->score[6] += best_scores.score[6];
 
-                ret.first->second[1] = std::max({ret.first->second[1], best_scores[1]});
-                ret.first->second[1] = std::min({ret.first->second[3], best_scores[3]});
-                ret.first->second[1] = std::max({ret.first->second[5], best_scores[5]});
-                ret.first->second[1] = std::min({ret.first->second[7], best_scores[7]});
+                ret.first->second->score[1] = std::max({ret.first->second->score[1], best_scores.score[1]});
+                ret.first->second->score[3] = std::min({ret.first->second->score[3], best_scores.score[3]});
+                ret.first->second->score[5] = std::max({ret.first->second->score[5], best_scores.score[5]});
+                ret.first->second->score[7] = std::min({ret.first->second->score[7], best_scores.score[7]});
             }
         }
         closedir(d);
@@ -196,7 +200,7 @@ int main(int argc, char *argv[]) {
         for (auto& it: scores_per_size) {
             file << std::left << std::setw(6) << it.first << "|";
             for (int i = 0; i < 8; i++) {
-                file << std::left << "|" << std::setw(11) << it.second[i];
+                file << std::left << "|" << std::setw(11) << it.second->score[i];
                 if (i == 3) file << "|";
             }
             file << "||" << std::endl;
