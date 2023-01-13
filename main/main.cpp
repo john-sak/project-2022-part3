@@ -222,13 +222,13 @@ int main(int argc, char *argv[]) {
 
                 if (ret.second == false) {
                     ret.first->second.score[0] += best_scores.score[0];
-                    ret.first->second.score[2] += best_scores.score[2];
+                    ret.first->second.score[1] += best_scores.score[1];
                     ret.first->second.score[4] += best_scores.score[4];
-                    ret.first->second.score[6] += best_scores.score[6];
+                    ret.first->second.score[5] += best_scores.score[5];
 
-                    ret.first->second.score[1] = std::max({ret.first->second.score[1], best_scores.score[1]});
+                    ret.first->second.score[2] = std::max({ret.first->second.score[2], best_scores.score[2]});
                     ret.first->second.score[3] = std::min({ret.first->second.score[3], best_scores.score[3]});
-                    ret.first->second.score[5] = std::max({ret.first->second.score[5], best_scores.score[5]});
+                    ret.first->second.score[6] = std::max({ret.first->second.score[6], best_scores.score[6]});
                     ret.first->second.score[7] = std::min({ret.first->second.score[7], best_scores.score[7]});
                 }
             } catch (...) {
