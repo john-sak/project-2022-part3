@@ -243,6 +243,7 @@ int main(int argc, char *argv[]) {
         file << "      ||                  local_search                 ||              simulated_annealing              ||" << std::endl;
         file << "======||===============================================||===============================================||" << std::endl;
         file << " size || min score | max score | min bound | max bound || min score | max score | min bound | max bound ||" << std::endl;
+        file << "======||===============================================||===============================================||" << std::endl;
 
         for (auto& it: scores_per_size) {
             file << std::left << std::setw(6) << it.first << "|";
