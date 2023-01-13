@@ -177,15 +177,15 @@ int main(int argc, char *argv[]) {
             std::pair<std::map<int, Scores>::iterator, bool> ret = scores_per_size.insert(std::pair<int, Scores> (size, best_scores));
 
             if (ret.second == false) {
-                ret.first->second->score[0] += best_scores.score[0];
-                ret.first->second->score[2] += best_scores.score[2];
-                ret.first->second->score[4] += best_scores.score[4];
-                ret.first->second->score[6] += best_scores.score[6];
+                ret.first->second.score[0] += best_scores.score[0];
+                ret.first->second.score[2] += best_scores.score[2];
+                ret.first->second.score[4] += best_scores.score[4];
+                ret.first->second.score[6] += best_scores.score[6];
 
-                ret.first->second->score[1] = std::max({ret.first->second->score[1], best_scores.score[1]});
-                ret.first->second->score[3] = std::min({ret.first->second->score[3], best_scores.score[3]});
-                ret.first->second->score[5] = std::max({ret.first->second->score[5], best_scores.score[5]});
-                ret.first->second->score[7] = std::min({ret.first->second->score[7], best_scores.score[7]});
+                ret.first->second.score[1] = std::max({ret.first->second.score[1], best_scores.score[1]});
+                ret.first->second.score[3] = std::min({ret.first->second.score[3], best_scores.score[3]});
+                ret.first->second.score[5] = std::max({ret.first->second.score[5], best_scores.score[5]});
+                ret.first->second.score[7] = std::min({ret.first->second.score[7], best_scores.score[7]});
             }
         }
         closedir(d);
@@ -200,7 +200,7 @@ int main(int argc, char *argv[]) {
         for (auto& it: scores_per_size) {
             file << std::left << std::setw(6) << it.first << "|";
             for (int i = 0; i < 8; i++) {
-                file << std::left << "|" << std::setw(11) << it.second->score[i];
+                file << std::left << "|" << std::setw(11) << it.second.score[i];
                 if (i == 3) file << "|";
             }
             file << "||" << std::endl;
