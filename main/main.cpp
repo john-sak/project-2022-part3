@@ -18,33 +18,33 @@ typedef struct {
 
 int main(int argc, char *argv[]) {
 
-    if (argc < 5) throw std::invalid_argument("Wrong arguments!");
-    if (strcmp(argv[1], "-i") || strcmp(argv[3], "-o")) throw std::invalid_argument("Wrong arguments!");
-    std::string path = std::string(argv[2]), out = std::string(argv[4]);
-
-    int preprocess = 0;
-    if (argc > 5) {
-        if (argc != 6) throw std::invalid_argument("Wrong arguments!");
-        if (strcmp(argv[5], "-preprocess")) throw std::invalid_argument("Wrong arguments!");
-        preprocess = 1;
-    }
-
-    std::string L = DEFAULT_L;
-    std::string THRESHOLD = DEFAULT_THRESHOLD;
-
-    if (preprocess == 1) {
-        // preprocess should find optimal values for L and THRESHOLD (?) and save them
-        // on std::strings L and THRESHOLD
-    }
-
-    const std::string poly_algos[2] = {"incremental", "convex_hull"};
-    const std::string edge_sel[3] = {"1", "2", "3"};
-    const std::string init[4] = {"1a", "1b", "2a", "2b"}; //incremental only
-
-    const std::string opt_algos[2] = {"local_search", "simulated_annealing"};
-    const std::string annealing[3] = {"local", "global", "subdivision"}; //simulated annealing only no subdiv
-
     try {
+
+        if (argc < 5) throw std::invalid_argument("Wrong arguments!");
+        if (strcmp(argv[1], "-i") || strcmp(argv[3], "-o")) throw std::invalid_argument("Wrong arguments!");
+        std::string path = std::string(argv[2]), out = std::string(argv[4]);
+
+        int preprocess = 0;
+        if (argc > 5) {
+            if (argc != 6) throw std::invalid_argument("Wrong arguments!");
+            if (strcmp(argv[5], "-preprocess")) throw std::invalid_argument("Wrong arguments!");
+            preprocess = 1;
+        }
+
+        std::string L = DEFAULT_L;
+        std::string THRESHOLD = DEFAULT_THRESHOLD;
+
+        if (preprocess == 1) {
+            // preprocess should find optimal values for L and THRESHOLD (?) and save them
+            // on std::strings L and THRESHOLD
+        }
+
+        const std::string poly_algos[2] = {"incremental", "convex_hull"};
+        const std::string edge_sel[3] = {"1", "2", "3"};
+        const std::string init[4] = {"1a", "1b", "2a", "2b"}; //incremental only
+
+        const std::string opt_algos[2] = {"local_search", "simulated_annealing"};
+        const std::string annealing[3] = {"local", "global", "subdivision"}; //simulated annealing only no subdiv
 
         // open dir
         DIR *d;
@@ -81,7 +81,77 @@ int main(int argc, char *argv[]) {
                             for (int k = 0; k < 4; k++) {
 
                                 //create initial polygon
-                                polyline S(arg.get_points(), poly_algos[i], edge_sel[j], init[k], timer);
+                                try {
+                                    polyline S(arg.get_points(), poly_algos[i], edge_sel[j], init[k], timer);
+
+                                    time_t time_remain = S.get_time_remain();
+
+                                    if (time_remain <= 0) continue;
+
+                                    // if local_search
+                                    if (l == 0) {
+
+                                        float score;
+
+                                        try {
+                                            optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
+
+                                            score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
+                                            if (score < best_scores.score[0]) best_scores.score[0] = score;
+                                            if (score > best_scores.score[2]) best_scores.score[2] = score;
+                                        } catch (...) {
+                                            // continue;
+                                        }
+
+                                        try {
+                                            optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
+
+                                            score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
+                                            if (score > best_scores.score[1]) best_scores.score[1] = score;
+                                            if (score < best_scores.score[3]) best_scores.score[3] = score;
+                                        } catch (...) {
+                                            // continue;
+                                        }
+
+                                    // if simulated_annealing
+                                    } else {
+                                        for (int m = 0; m < 2; m++) {
+
+                                            float score;
+
+                                            try {
+                                                optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
+
+                                                score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
+                                                if (score < best_scores.score[4]) best_scores.score[4] = score;
+                                                if (score > best_scores.score[6]) best_scores.score[6] = score;
+                                            } catch (...) {
+                                                // continue;
+                                            }
+
+                                            try {
+                                                optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
+
+                                                score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
+                                                if (score > best_scores.score[5]) best_scores.score[5] = score;
+                                                if (score < best_scores.score[7]) best_scores.score[7] = score;
+                                            } catch (...) {
+                                                // continue;
+                                            }
+                                        }
+                                    }
+                                } catch (...) {
+                                    // continue;
+                                }
+                            }
+
+                        // if convex_hull
+                        } else {
+
+                            //create initial polygon
+                            try {
+                                polyline S(arg.get_points(), poly_algos[i], edge_sel[j], "", timer);
+
                                 time_t time_remain = S.get_time_remain();
 
                                 if (time_remain <= 0) continue;
@@ -91,17 +161,25 @@ int main(int argc, char *argv[]) {
 
                                     float score;
 
-                                    optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
+                                    try {
+                                        optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
 
-                                    score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
-                                    if (score < best_scores.score[0]) best_scores.score[0] = score;
-                                    if (score > best_scores.score[2]) best_scores.score[2] = score;
+                                        score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
+                                        if (score < best_scores.score[0]) best_scores.score[0] = score;
+                                        if (score > best_scores.score[2]) best_scores.score[2] = score;
+                                    } catch (...) {
+                                        // continue;
+                                    }
 
-                                    optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
+                                    try {
+                                        optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
 
-                                    score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
-                                    if (score > best_scores.score[1]) best_scores.score[1] = score;
-                                    if (score < best_scores.score[3]) best_scores.score[3] = score;
+                                        score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
+                                        if (score > best_scores.score[1]) best_scores.score[1] = score;
+                                        if (score < best_scores.score[3]) best_scores.score[3] = score;
+                                    } catch (...) {
+                                        // continue;
+                                    }
 
                                 // if simulated_annealing
                                 } else {
@@ -109,65 +187,29 @@ int main(int argc, char *argv[]) {
 
                                         float score;
 
-                                        optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
+                                        try {
+                                            optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
 
-                                        score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
-                                        if (score < best_scores.score[4]) best_scores.score[4] = score;
-                                        if (score > best_scores.score[6]) best_scores.score[6] = score;
+                                            score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
+                                            if (score < best_scores.score[4]) best_scores.score[4] = score;
+                                            if (score > best_scores.score[6]) best_scores.score[6] = score;
+                                        } catch (...) {
+                                            // continue;
+                                        }
 
-                                        optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
+                                        try {
+                                            optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
 
-                                        score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
-                                        if (score > best_scores.score[5]) best_scores.score[5] = score;
-                                        if (score < best_scores.score[7]) best_scores.score[7] = score;
+                                            score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
+                                            if (score > best_scores.score[5]) best_scores.score[5] = score;
+                                            if (score < best_scores.score[7]) best_scores.score[7] = score;
+                                        } catch (...) {
+                                            // continue;
+                                        }
                                     }
                                 }
-                            }
-
-                        // if convex_hull
-                        } else {
-
-                            //create initial polygon
-                            polyline S(arg.get_points(), poly_algos[i], edge_sel[j], "", timer);
-                            time_t time_remain = S.get_time_remain();
-
-                            if (time_remain <= 0) continue;
-
-                            // if local_search
-                            if (l == 0) {
-
-                                float score;
-
-                                optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
-
-                                score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
-                                if (score < best_scores.score[0]) best_scores.score[0] = score;
-                                if (score > best_scores.score[2]) best_scores.score[2] = score;
-
-                                optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
-
-                                score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
-                                if (score > best_scores.score[1]) best_scores.score[1] = score;
-                                if (score < best_scores.score[3]) best_scores.score[3] = score;
-
-                            // if simulated_annealing
-                            } else {
-                                for (int m = 0; m < 2; m++) {
-
-                                    float score;
-
-                                    optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
-
-                                    score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
-                                    if (score < best_scores.score[4]) best_scores.score[4] = score;
-                                    if (score > best_scores.score[6]) best_scores.score[6] = score;
-
-                                    optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
-
-                                    score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
-                                    if (score > best_scores.score[5]) best_scores.score[5] = score;
-                                    if (score < best_scores.score[7]) best_scores.score[7] = score;
-                                }
+                            } catch (...) {
+                                // continue;
                             }
                         }
                     }
