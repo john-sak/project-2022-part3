@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 
         const std::string poly_algos[2] = {"incremental", "convex_hull"};
         const std::string edge_sel[3] = {"1", "2", "3"};
-        const std::string init[4] = {"1a", "1b", "2a", "2b"}; //incremental only
+        const std::string init[4] = {"1a", "2a", "1b", "2b"}; //incremental only
 
         const std::string opt_algos[2] = {"local_search", "simulated_annealing"};
         const std::string annealing[3] = {"local", "global", "subdivision"}; //simulated annealing only no subdiv
@@ -55,6 +55,7 @@ int main(int argc, char *argv[]) {
 
         while ((dir = readdir(d)) != NULL) {
             if (!std::string(dir->d_name).compare("..") || !std::string(dir->d_name).compare(".")) continue;
+            std::cout << dir->d_name << std::endl;
 
             try {
                 arguments arg(const_cast<char *> ((path + "/" + std::string(dir->d_name)).c_str()));
@@ -80,7 +81,7 @@ int main(int argc, char *argv[]) {
                             if (i == 0) {
 
                                 // for initialization 1a, 1b, 2a, 2b
-                                for (int k = 0; k < 4; k++) {
+                                for (int k = 0; k < 2; k++) {
 
                                     //create initial polygon
                                     try {
@@ -114,7 +115,6 @@ int main(int argc, char *argv[]) {
                                             } catch (...) {
                                                 // continue;
                                             }
-
                                         // if simulated_annealing
                                         } else {
                                             for (int m = 0; m < 2; m++) {
@@ -141,6 +141,7 @@ int main(int argc, char *argv[]) {
                                                     // continue;
                                                 }
                                             }
+                                            
                                         }
                                     } catch (...) {
                                         // continue;
@@ -182,7 +183,6 @@ int main(int argc, char *argv[]) {
                                         } catch (...) {
                                             // continue;
                                         }
-
                                     // if simulated_annealing
                                     } else {
                                         for (int m = 0; m < 2; m++) {
