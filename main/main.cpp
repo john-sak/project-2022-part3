@@ -55,34 +55,104 @@ int main(int argc, char *argv[]) {
 
         while ((dir = readdir(d)) != NULL) {
             if (!std::string(dir->d_name).compare("..") || !std::string(dir->d_name).compare(".")) continue;
-            arguments arg(const_cast<char *> ((path + "/" + std::string(dir->d_name)).c_str()));
 
-            // write size of points of file
-            int size = arg.get_points().size();
-            Scores best_scores = {1, 0, 0, 1, 1, 0, 0, 1};
+            try {
+                arguments arg(const_cast<char *> ((path + "/" + std::string(dir->d_name)).c_str()));
 
-            time_t timer = 500 * size;
+                // write size of points of file
+                int size = arg.get_points().size();
+                Scores best_scores = {1, 0, 0, 1, 1, 0, 0, 1};
 
-            // loop through algorithms
+                time_t timer = 500 * size;
 
-            // for local_search, simulated_annealing
-            for (int l = 0; l < 2; l++) {
+                // loop through algorithms
 
-                // for incremental, convex_hull
-                for (int i = 0; i < 2; i++) {
+                // for local_search, simulated_annealing
+                for (int l = 0; l < 2; l++) {
 
-                    // for edge_selecion 1, 2, 3
-                    for (int j = 0; j < 3; j++) {
+                    // for incremental, convex_hull
+                    for (int i = 0; i < 2; i++) {
 
-                        // if incremental
-                        if (i == 0) {
+                        // for edge_selecion 1, 2, 3
+                        for (int j = 0; j < 3; j++) {
 
-                            // for initialization 1a, 1b, 2a, 2b
-                            for (int k = 0; k < 4; k++) {
+                            // if incremental
+                            if (i == 0) {
+
+                                // for initialization 1a, 1b, 2a, 2b
+                                for (int k = 0; k < 4; k++) {
+
+                                    //create initial polygon
+                                    try {
+                                        polyline S(arg.get_points(), poly_algos[i], edge_sel[j], init[k], timer);
+
+                                        time_t time_remain = S.get_time_remain();
+
+                                        if (time_remain <= 0) continue;
+
+                                        // if local_search
+                                        if (l == 0) {
+
+                                            float score;
+
+                                            try {
+                                                optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
+
+                                                score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
+                                                if (score < best_scores.score[0]) best_scores.score[0] = score;
+                                                if (score > best_scores.score[2]) best_scores.score[2] = score;
+                                            } catch (...) {
+                                                // continue;
+                                            }
+
+                                            try {
+                                                optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
+
+                                                score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
+                                                if (score > best_scores.score[1]) best_scores.score[1] = score;
+                                                if (score < best_scores.score[3]) best_scores.score[3] = score;
+                                            } catch (...) {
+                                                // continue;
+                                            }
+
+                                        // if simulated_annealing
+                                        } else {
+                                            for (int m = 0; m < 2; m++) {
+
+                                                float score;
+
+                                                try {
+                                                    optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
+
+                                                    score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
+                                                    if (score < best_scores.score[4]) best_scores.score[4] = score;
+                                                    if (score > best_scores.score[6]) best_scores.score[6] = score;
+                                                } catch (...) {
+                                                    // continue;
+                                                }
+
+                                                try {
+                                                    optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
+
+                                                    score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
+                                                    if (score > best_scores.score[5]) best_scores.score[5] = score;
+                                                    if (score < best_scores.score[7]) best_scores.score[7] = score;
+                                                } catch (...) {
+                                                    // continue;
+                                                }
+                                            }
+                                        }
+                                    } catch (...) {
+                                        // continue;
+                                    }
+                                }
+
+                            // if convex_hull
+                            } else {
 
                                 //create initial polygon
                                 try {
-                                    polyline S(arg.get_points(), poly_algos[i], edge_sel[j], init[k], timer);
+                                    polyline S(arg.get_points(), poly_algos[i], edge_sel[j], "", timer);
 
                                     time_t time_remain = S.get_time_remain();
 
@@ -144,90 +214,25 @@ int main(int argc, char *argv[]) {
                                     // continue;
                                 }
                             }
-
-                        // if convex_hull
-                        } else {
-
-                            //create initial polygon
-                            try {
-                                polyline S(arg.get_points(), poly_algos[i], edge_sel[j], "", timer);
-
-                                time_t time_remain = S.get_time_remain();
-
-                                if (time_remain <= 0) continue;
-
-                                // if local_search
-                                if (l == 0) {
-
-                                    float score;
-
-                                    try {
-                                        optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
-
-                                        score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
-                                        if (score < best_scores.score[0]) best_scores.score[0] = score;
-                                        if (score > best_scores.score[2]) best_scores.score[2] = score;
-                                    } catch (...) {
-                                        // continue;
-                                    }
-
-                                    try {
-                                        optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", THRESHOLD, S.get_area(), S.get_ch_area(), time_remain);
-
-                                        score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
-                                        if (score > best_scores.score[1]) best_scores.score[1] = score;
-                                        if (score < best_scores.score[3]) best_scores.score[3] = score;
-                                    } catch (...) {
-                                        // continue;
-                                    }
-
-                                // if simulated_annealing
-                                } else {
-                                    for (int m = 0; m < 2; m++) {
-
-                                        float score;
-
-                                        try {
-                                            optimization O_min(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "min", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
-
-                                            score = O_min.get_time_remain() > 0 ? O_min.get_end_area() / S.get_ch_area() : 1;
-                                            if (score < best_scores.score[4]) best_scores.score[4] = score;
-                                            if (score > best_scores.score[6]) best_scores.score[6] = score;
-                                        } catch (...) {
-                                            // continue;
-                                        }
-
-                                        try {
-                                            optimization O_max(S.get_pl_points(), S.get_poly_line(), opt_algos[l], L, "max", annealing[m], S.get_area(), S.get_ch_area(), time_remain);
-
-                                            score = O_max.get_time_remain() > 0 ? O_max.get_end_area() / S.get_ch_area() : 0;
-                                            if (score > best_scores.score[5]) best_scores.score[5] = score;
-                                            if (score < best_scores.score[7]) best_scores.score[7] = score;
-                                        } catch (...) {
-                                            // continue;
-                                        }
-                                    }
-                                }
-                            } catch (...) {
-                                // continue;
-                            }
                         }
                     }
                 }
-            }
 
-            std::pair<std::map<int, Scores>::iterator, bool> ret = scores_per_size.insert(std::pair<int, Scores> (size, best_scores));
+                std::pair<std::map<int, Scores>::iterator, bool> ret = scores_per_size.insert(std::pair<int, Scores> (size, best_scores));
 
-            if (ret.second == false) {
-                ret.first->second.score[0] += best_scores.score[0];
-                ret.first->second.score[2] += best_scores.score[2];
-                ret.first->second.score[4] += best_scores.score[4];
-                ret.first->second.score[6] += best_scores.score[6];
+                if (ret.second == false) {
+                    ret.first->second.score[0] += best_scores.score[0];
+                    ret.first->second.score[2] += best_scores.score[2];
+                    ret.first->second.score[4] += best_scores.score[4];
+                    ret.first->second.score[6] += best_scores.score[6];
 
-                ret.first->second.score[1] = std::max({ret.first->second.score[1], best_scores.score[1]});
-                ret.first->second.score[3] = std::min({ret.first->second.score[3], best_scores.score[3]});
-                ret.first->second.score[5] = std::max({ret.first->second.score[5], best_scores.score[5]});
-                ret.first->second.score[7] = std::min({ret.first->second.score[7], best_scores.score[7]});
+                    ret.first->second.score[1] = std::max({ret.first->second.score[1], best_scores.score[1]});
+                    ret.first->second.score[3] = std::min({ret.first->second.score[3], best_scores.score[3]});
+                    ret.first->second.score[5] = std::max({ret.first->second.score[5], best_scores.score[5]});
+                    ret.first->second.score[7] = std::min({ret.first->second.score[7], best_scores.score[7]});
+                }
+            } catch (...) {
+                // continue;
             }
         }
         closedir(d);
